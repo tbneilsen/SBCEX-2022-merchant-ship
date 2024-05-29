@@ -21,27 +21,17 @@
 %   and 90-1100 Hz on all 16 channels of VLA1 with a single run of this script. 
 % 
 %   Author: Alexandra Hopps McDaniel
-%   Created: 9/22/23
-%   Modified: 10/4/23
+%   Created: 9/22/2023
+%   Modified: 5/29/2024
 
 %% Start up
-clear all;
-%close all;
-
+clear all; close all;
+currentFilePath = mfilename('fullpath');
 %% User Defined Parameters
 
 % Add paths to the folders that contain the time series data for PROTEUS and VLA1 and VLA2 at each location
-addpath(genpath('F:\VLA1-2 (Scripps)\data_files\1-min_npy')) % Path to VLA1 and VLA2 data 
-addpath(genpath('G:\PROTEUS\2022 Data\1-min Files')) % Path to PROTEUS data 
-addpath(genpath('C:\Users\alexh\OneDrive\Desktop\KSA Research\Notes\SBCEX Spreadsheets')) % Path to the ship spreadsheets
-addpath(genpath('C:\Users\alexh\OneDrive\Desktop\KSA Research\Codes\sbc-vla-data\prossessing_MPL_data'))
-% For processing .npy files (Scripps data), the npy-matlab library must be downloaded or cloned to your machine. 
-% You can find the npy-matlab library on GitHub: https://github.com/kwikteam/npy-matlab. 
-% Add path to the folder that contains the script 'readNPY.m'
-addpath(genpath('C:\Users\alexh\OneDrive\Desktop\KSA Research\Notes\SBCEX Spreadsheets'));
-
-% Input which array's data you will be plotting
-which_array = 'VLA2'; % Can be 'PROTEUS', 'VLA1', OR 'VLA2'
+addpath(genpath('F:\VLA1-2 (Scripps)\data_files\1-min_npy'))        % Path to VLA1 and VLA2 data 
+addpath(genpath('G:\PROTEUS\2022 Data\1-min Files'))                % Path to PROTEUS data 
 
 % Include the file name for the spreadsheet with ships that approach 15km or less to the arrays. 
 % The spreadsheet includes information regarding time stamp, distance, and speed for CPA.
@@ -50,6 +40,9 @@ ships_spreadsheet = 'SHIPS_SBCEX2022_VLA1_VLA2.xlsx';
 
 % Sheet name can be: 'Proteus', 'VLA1_Location1', 'VLA1_Location2', 'VLA2_Location1', or 'VLA2_Location2',
 sheet_name = 'VLA2_Location1'; 
+
+% Input which array's data you will be plotting
+which_array = 'VLA2';   % Can be 'PROTEUS', 'VLA1', OR 'VLA2'
 
 % Index of the interested ship will be equal to (row number - 1) on the spreadsheet. 
 interested_ship = 16;
@@ -61,16 +54,19 @@ channels = 2;
 % Information is ordered as follows: [fmin1, fmax1, nfft1; fmin2, fmax2, nfft2; ...] 
 % Note: A larger nfft provides better frequency resolution
 % Suggested: [20,40,2^18; 20,100,2^18] (2^18 is a good nfft for VLA 1 & 2; 2^17 is a good nfft for PROTEUS)
-spec_info = [15,80,2^17];%20,40,2^19];%[15,80,2^19;20,40,924288]; %[15,80,2^18;20,40,2^18];% 20,100,2^18]; 
+spec_info = [15,80,2^17];
 
 % Interval of time that the spectrogram should display in minutes. 
 TimeInterval = 20;
 
 % Specify whether or not you want to save a .mat file with the spectrogram info 
-save_mat = false;
-save_mat_path = 'C:\Users\alexh\OneDrive\Desktop\KSA Research\Codes\matlab-bborca\Inversion\Inversion_4000_iteration_scans\Ship Specs .mat files\';
+save_mat = true;
+save_mat_path = 'C:\Users\alexh\OneDrive\Desktop\KSA Research\Codes\SBCEX-2022-merchant-ship\SOO .mat files\';
 
+% The path to the folder where the spectrograms .png files should be saved. 
 save_spec = true;
+save_spec_path = 'C:\Users\alexh\OneDrive\Desktop\KSA Research\Codes\SBCEX-2022-merchant-ship\Spectrograms\Measured\';
+
 % Specify whether or not you want to make a plot with the beta line visible
 show_beta = true; % Can be true or false 
 beta_val = [27.8]; % Frequency where beta goes to +/- infinity 
@@ -78,16 +74,18 @@ beta_val = [27.8]; % Frequency where beta goes to +/- infinity
 % Specify whether or not you want the plot to have a title
 has_title = false; 
 
-% The path to the folder where the spectrograms .png files should be saved. 
-% Matlab does not create folders when saving, so make sure the correct folders are already created. 
-% Currently, this appends the following to the folder paths depending on the condition of show_beta as true or false. 
-% If show_beta == false: 
-% '...\{ship_name}\{which_array}\{fmin}_{fmax}Hz_{TimeInterval}m\'.
-% Example: '...\CARMEN\PROTEUS\10_90Hz_25m\'.
-% If show_beta == true:
-% '...\FORMAL PLOTS\{fmin}_{fmax}Hz_{TimeInterval}m\'];
-% Example: '...\FORMAL PLOTS\10_90Hz_25m\'.
-save_folder_path = 'C:\Users\alexh\OneDrive\Desktop\KSA Research\Codes\matlab-bborca\Inversion\Inversion_4000_iteration_scans\actual_specs\';
+%% The script accesses the correct folder paths
+
+[currentFolderPath, ~, ~] = fileparts(currentFilePath);
+git_library = fileparts(currentFolderPath);
+
+% Add path to the ship spreadsheets
+spreadsheet_path = fullfile(git_library,'Merchant Ship Spreadsheets');
+addpath(spreadsheet_path) 
+
+% Path to scripts for processing .npy files (Scripps data)
+array_processing_path = fullfile(git_library,'Processing array file types');
+addpath(array_processing_path)
 %% Read ship info
 
 warning('off', 'MATLAB:table:ModifiedVarnames'); % Turns off a warning about reading in the ship names off of the spreadsheet. 
@@ -269,9 +267,6 @@ for x=1:num_plots
         ax.XAxis.FontSize = 15; 
         ax.YAxis.FontSize = 15; 
         
-
-        png_name = [ship_name, '_', which_array, '_CH', chan_num,'BIGGER3.png'];
-        
         if has_title == true
             title(spec_Title)
         end
@@ -292,28 +287,35 @@ for x=1:num_plots
                 end
                 text(plot_freq(text_index), y_coordinate, text_str, 'Interpreter','latex','HorizontalAlignment', 'center', 'FontSize', 18); % Add the text above the spectrogram at the specified frequency
             end
-            %save_path = [save_folder_path,ship_name,'\FORMAL PLOTS\',num2str(fmin),'_',num2str(fmax),'Hz_',num2str(TimeInterval),'m\',png_name];
-       
-        else
-            %save_path = [save_folder_path,ship_name,'\',which_array,'\',num2str(fmin),'_',num2str(fmax),'Hz_',num2str(TimeInterval),'m\',png_name];
+        end    
         
-        end 
-        save_nam=[save_folder_path,png_name];
         if save_spec==true
-            saveas(fig, save_nam)
+            png_file = [ship_name, '_', which_array, '_CH', chan_num,'.png'];
+            full_spec_path = fullfile(save_spec_path, png_file);
+            
+            % Create the folder if it does not exist
+            if ~exist(save_spec_path, 'dir')
+                mkdir(save_spec_path);
+            end
+                        
+            saveas(fig, full_spec_path)
         end 
-        
-
     end
+end
+%% Save .mat file of spectrogram 
 
+mat_file =[ship_name,'_',which_array,'.mat'];
+full_mat_path = fullfile(save_mat_path, mat_file);
+
+% Create the folder if it does not exist
+if ~exist(save_mat_path, 'dir')
+    mkdir(save_mat_path);
 end
 
-%% Save .mat file of spectrogram 
 if save_mat==true
     fselect=plot_freq';
     PSDselectf=plot_PSD;
-    save_mat=[save_mat_path,ship_name,'_',which_array,'.mat'];
-    save(save_mat,'PSDselectf','fselect','tspec')
+    save(full_mat_path,'PSDselectf','fselect','tspec')
 end 
 % [15,80,2^19] This is the spec infor needed
 
