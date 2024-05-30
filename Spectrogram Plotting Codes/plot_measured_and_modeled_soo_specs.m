@@ -1,5 +1,5 @@
 %% 
-%% Spectrogram Plotting 
+%% Measured and modeled spectrogram plotting 
 
 %   This code can mass creates spectograms for the VLA data from Scripps saved in
 %   1-min .npy files and the PROTEUS data from ARL:UT saved in 1-min .mat files.

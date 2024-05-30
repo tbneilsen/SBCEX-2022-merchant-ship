@@ -11,7 +11,15 @@
 %   - DL1 Sound Speeds with source and reciever prior model for the top
 %     layers of the NEMP
 
+%%
+clear all; close all;
+currentFilePath = mfilename('fullpath');
+
+[currentFolderPath, ~, ~] = fileparts(currentFilePath);
+git_library = fileparts(currentFolderPath);
 %% B12 singular points
+
+% A plot of the beta_1,2 frequencies for the 24 interested ships
 
 SHIPS = {'CARMEN'	'MSC CANCUN'	'ALS APOLLO'	'PHOENIX ADMIRAL 1'	'PHOENIX ADMIRAL 2'	'MAERSK KENSINGTON'	'GSL DOROTHEA'	'DEE4 FIG'	'MSC DON GIOVANNI'	'WAN HAI 301'	'SEAMAX GREENWICH'	'EVER FASHION'	'MAERSK KINLOSS'	'ADVENTURE OF THE SEAS' 'ATLANTIC SAIL'	'HISTRIA GIADA'	'NORDBAY'	'MSC KATRINA'	'MAERSK KLEVEN'	'AURIGA LEADER'	'GSL NICOLETTA'	'SIEM ARISTOTLE'	'GLEN CANYON'	'TORRENTE'};
 indices = 1:numel(SHIPS);
@@ -64,6 +72,10 @@ grid on;
 legend([h1, h2, h3, h4, h5, h6], 'VLA1', 'PROTEUS', 'VLA2', 'SOUTHERN LANE','NORTHERN LANE','OTHER TRACK')
 
 %% DL1 peak SS with error bars
+
+% Plots the DL1 SS of the 24 interested ships with bars that indicated the
+% standard deviation of the mean sound speeds from the marginal probability
+% distributions
 
 SS = [NaN	NaN	1821	NaN	NaN	NaN	NaN	NaN	NaN	1801	NaN	NaN	NaN	NaN	1814	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN
 NaN	NaN	1791	1788	1785	1814	1795	1805	1769	1791	1778	NaN	1782	1791	1795	1782	1772	1765	1765	NaN	NaN	NaN	NaN	NaN	NaN	NaN
@@ -151,10 +163,17 @@ legend([h1, h2, h3, h4, h5, h6],{'VLA1','PROTEUS','VLA2', 'SOUTHERN LANE','NORTH
 
 
 %% Plot SS on map of NEMP
-addpath('C:\Users\alexh\OneDrive\Desktop\KSA Research\Codes\sbc-vla-data\SBCEX2022\PLOT_SHIP_TRACKS\');
-addpath('C:\Users\alexh\OneDrive\Desktop\KSA Research\Codes\sbc-vla-data\SBCEX2022\PLOT_SHIP_TRACKS\bathy');  % to plot base map
-load('bathy/SBCEX21bathy.mat')
-%SBCEXP22_map_shallowWaterB
+
+% This code reads the peaked SS values from the interested ships
+% spreadsheet and plots them based on the ship CPA coordinates on the map
+% of the NEMP. 
+
+bathy_path = fullfile(git_library,'Mapping Ship Tracks', 'bathy');
+
+addpath(bathy_path);  % to plot base map
+
+load('bathy/SBCEX21bathy.mat') % loads the NEMP map
+
 LONindx = find( -lon >= 70.45 & -lon <= 70.76 );
 LATindx = find(  lat >= 40.41 &  lat <= 40.55 );
 h1 = figure(1); clf
@@ -168,7 +187,6 @@ hold on;
 set(h10,'LineWidth',0.5);
 [C,h50] = contour(-lon,lat,-d,45:5:155,'LineColor',[0.8 0.8 0.8]);
 set(h50,'LineWidth',2);
-%colormap([0.8 0.8 0.8]);  % set color map to black(50%)
 
 clabel(C,h50,[50 60 70 75 80 90 100 110 120 130 140 150],'FontSize',10,'Color',[.7 .7 .7]);
 
@@ -186,7 +204,6 @@ moorings = { '40' '28.207'  '70' '35.827' 'k' '^' 'VLA 1'
 grid on
 box on;
 
-
 % plot westbound lanes
 L1a = plot([sLanes(1,2) sLanes(1,4)],[sLanes(1,1) sLanes(1,3)],'color',[.5 .5 .5],'linewidth',2);
 L1b = plot([sLanes(2,2) sLanes(2,4)],[sLanes(2,1) sLanes(2,3)],'color',[.5 .5 .5],'linewidth',2);
@@ -200,7 +217,7 @@ axis([70.5 70.63 40.38 40.565]); grid on;
    ylabel('Latitude (deg)')
    title('Deep Layer 1 Sound Speed at Discrete Coordinates')
 
-   %  plot mooring
+% plot mooring
 for k = 1:size(moorings,1)
   M = str2double(moorings(k,1:4));
   cval = char(moorings(k,5));
@@ -208,22 +225,22 @@ for k = 1:size(moorings,1)
   HM(k) = plot(M(3)+M(4)/60,M(1)+M(2)/60,'color',cval,'marker',sym,'markersize',6,'linewidth',1,'markerfacecolor',cval,'linestyle','none');
 end
 
-
-addpath('C:\Users\alexh\OneDrive\Desktop\KSA Research\Notes\')
+spreadsheet_path = fullfile(git_library,'Merchant Ship Spreadsheets');
+addpath(spreadsheet_path);  
 
 file = 'SBCEX_ALL_INTERESTED_SHIPS_FINAL.xlsx';
 
 sheet = 'ALL SHIP INFO NEW';
 
-lat_prot_range = 'O3:O28';
-long_prot_range = 'P3:P28';
-ss_prot_range = 'Q3:Q28';
-lat_vla1_range = 'I3:I28';
-long_vla1_range = 'J3:J28';
-ss_vla1_range = 'K3:K28';
-lat_vla2_range = 'U3:U28';
-long_vla2_range = 'V3:V28';
-ss_vla2_range = 'W3:W28';
+lat_prot_range = 'T3:T29';
+long_prot_range = 'U3:U29';
+ss_prot_range = 'AA3:AA29';
+lat_vla1_range = 'I3:I29';
+long_vla1_range = 'J3:J29';
+ss_vla1_range = 'P3:P29';
+lat_vla2_range = 'AE3:AE29';
+long_vla2_range = 'AF3:AF29';
+ss_vla2_range = 'AL3:AL29';
 
 
 lat_prot = xlsread(file,sheet,lat_prot_range);
@@ -254,6 +271,11 @@ h4=plot(NaN, NaN, 'Marker', 'o', 'Color', 'k', 'MarkerFaceColor', 'k');
 legend([h1,h2,h3,h4],'VLA1','PROTEUS','VLA2','SOUND SPEED')
 
 %% Plot the 2022 SSP next to the 2017 SSP
+
+inversion_path = fullfile(git_library,'Inversion Codes');
+
+addpath(inversion_path);  % to plot base map
+
 wcpname  = 'SBCEX22_SSP';
 wcp = load(wcpname);
 ssp      = [2,3,6,11,12,14];

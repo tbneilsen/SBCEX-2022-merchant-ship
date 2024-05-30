@@ -27,6 +27,7 @@
 %% Start up
 clear all; close all;
 currentFilePath = mfilename('fullpath');
+
 %% User Defined Parameters
 
 % Add paths to the folders that contain the time series data for PROTEUS and VLA1 and VLA2 at each location
